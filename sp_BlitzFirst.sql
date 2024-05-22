@@ -1,9 +1,9 @@
-IF OBJECT_ID('dbo.sp_BlitzFirst') IS NULL
-  EXEC ('CREATE PROCEDURE dbo.sp_BlitzFirst AS RETURN 0;');
+IF OBJECT_ID('ADM.sp_BlitzFirst') IS NULL
+  EXEC ('CREATE PROCEDURE ADM.sp_BlitzFirst AS RETURN 0;');
 GO
 
 
-ALTER PROCEDURE [dbo].[sp_BlitzFirst]
+ALTER PROCEDURE [ADM].[sp_BlitzFirst]
     @LogMessage NVARCHAR(4000) = NULL ,
     @Help TINYINT = 0 ,
     @AsOf DATETIMEOFFSET = NULL ,
@@ -134,7 +134,7 @@ DECLARE @StringToExecute NVARCHAR(MAX),
     @OutputTableNameWaitStats_Categories NVARCHAR(256),
 	@OutputTableCleanupDate DATE,
     @ObjectFullName NVARCHAR(2000),
-	@BlitzWho NVARCHAR(MAX) = N'EXEC dbo.sp_BlitzWho @ShowSleepingSPIDs = ' + CONVERT(NVARCHAR(1), @ShowSleepingSPIDs) + N';',
+	@BlitzWho NVARCHAR(MAX) = N'EXEC ADM.sp_BlitzWho @ShowSleepingSPIDs = ' + CONVERT(NVARCHAR(1), @ShowSleepingSPIDs) + N';',
     @BlitzCacheMinutesBack INT,
     @UnquotedOutputServerName NVARCHAR(256) = @OutputServerName ,
     @UnquotedOutputDatabaseName NVARCHAR(256) = @OutputDatabaseName ,
@@ -187,13 +187,13 @@ IF @LogMessage IS NOT NULL
     /* Try to set the output table parameters if they don't exist */
     IF @OutputSchemaName IS NULL AND @OutputTableName IS NULL AND @OutputDatabaseName IS NULL
         BEGIN
-            SET @OutputSchemaName = N'[dbo]';
+            SET @OutputSchemaName = N'[ADM]';
             SET @OutputTableName = N'[BlitzFirst]';
 
             /* Look for the table in the current database */
             SELECT TOP 1 @OutputDatabaseName = QUOTENAME(TABLE_CATALOG)
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'BlitzFirst';
+                WHERE TABLE_SCHEMA = 'ADM' AND TABLE_NAME = 'BlitzFirst';
 
             IF @OutputDatabaseName IS NULL AND EXISTS (SELECT * FROM sys.databases WHERE name = 'DBAtools')
                 SET @OutputDatabaseName = '[DBAtools]';
@@ -271,7 +271,7 @@ BEGIN
     /* What's running right now? This is the first and last result set. */
     IF @SinceStartup = 0 AND @Seconds > 0 AND @ExpertMode = 1 AND @OutputType <> 'NONE' AND @OutputResultSets LIKE N'%BlitzWho_Start%'
     BEGIN
-		IF OBJECT_ID('master.dbo.sp_BlitzWho') IS NULL AND OBJECT_ID('dbo.sp_BlitzWho') IS NULL
+		IF OBJECT_ID('master.ADM.sp_BlitzWho') IS NULL AND OBJECT_ID('ADM.sp_BlitzWho') IS NULL
 		BEGIN
 			PRINT N'sp_BlitzWho is not installed in the current database_files.  You can get a copy from http://FirstResponderKit.org';
 		END;
@@ -848,7 +848,7 @@ BEGIN
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OLEDB_JOINTRANSACTION','Preemptive',0);
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OLEDB_RELEASE','Preemptive',0);
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OLEDB_SETPROPERTIES','Preemptive',0);
-			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OLEDBOPS','Preemptive',0);
+			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OLEADMPS','Preemptive',0);
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OS_ACCEPTSECURITYCONTEXT','Preemptive',0);
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OS_ACQUIRECREDENTIALSHANDLE','Preemptive',0);
 			INSERT INTO ##WaitCategories(WaitType, WaitCategory, Ignorable) VALUES ('PREEMPTIVE_OS_AUTHENTICATIONOPS','Preemptive',0);
@@ -1496,9 +1496,9 @@ BEGIN
             AND (counters.[instance_name] IS NULL OR counters.[instance_name] COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(dmv.[instance_name]) COLLATE SQL_Latin1_General_CP1_CI_AS);
 
 	/* For Github #2743: */
-	CREATE TABLE #TempdbOperationalStats (object_id BIGINT PRIMARY KEY CLUSTERED,
+	CREATE TABLE #TempADMperationalStats (object_id BIGINT PRIMARY KEY CLUSTERED,
 		forwarded_fetch_count BIGINT);
-	INSERT INTO #TempdbOperationalStats (object_id, forwarded_fetch_count)
+	INSERT INTO #TempADMperationalStats (object_id, forwarded_fetch_count)
 		SELECT object_id, forwarded_fetch_count
 		FROM tempdb.sys.dm_db_index_operational_stats(DB_ID('tempdb'), NULL, NULL, NULL) os
 	WHERE os.database_id = DB_ID('tempdb')
@@ -1572,7 +1572,7 @@ BEGIN
     /* If there's a backup running, add details explaining how long full backup has been taking in the last month. */
     IF @Seconds > 0 AND SERVERPROPERTY('EngineEdition') <> 5 /*CAST(SERVERPROPERTY('edition') AS VARCHAR(100)) <> 'SQL Azure'*/
     BEGIN
-        SET @StringToExecute = 'UPDATE #BlitzFirstResults SET Details = Details + '' Over the last 60 days, the full backup usually takes '' + CAST((SELECT AVG(DATEDIFF(mi, bs.backup_start_date, bs.backup_finish_date)) FROM msdb.dbo.backupset bs WHERE abr.DatabaseName = bs.database_name AND bs.type = ''D'' AND bs.backup_start_date > DATEADD(dd, -60, SYSDATETIMEOFFSET()) AND bs.backup_finish_date IS NOT NULL) AS NVARCHAR(100)) + '' minutes.'' FROM #BlitzFirstResults abr WHERE abr.CheckID = 1 AND EXISTS (SELECT * FROM msdb.dbo.backupset bs WHERE bs.type = ''D'' AND bs.backup_start_date > DATEADD(dd, -60, SYSDATETIMEOFFSET()) AND bs.backup_finish_date IS NOT NULL AND abr.DatabaseName = bs.database_name AND DATEDIFF(mi, bs.backup_start_date, bs.backup_finish_date) > 1)';
+        SET @StringToExecute = 'UPDATE #BlitzFirstResults SET Details = Details + '' Over the last 60 days, the full backup usually takes '' + CAST((SELECT AVG(DATEDIFF(mi, bs.backup_start_date, bs.backup_finish_date)) FROM msdb.ADM.backupset bs WHERE abr.DatabaseName = bs.database_name AND bs.type = ''D'' AND bs.backup_start_date > DATEADD(dd, -60, SYSDATETIMEOFFSET()) AND bs.backup_finish_date IS NOT NULL) AS NVARCHAR(100)) + '' minutes.'' FROM #BlitzFirstResults abr WHERE abr.CheckID = 1 AND EXISTS (SELECT * FROM msdb.ADM.backupset bs WHERE bs.type = ''D'' AND bs.backup_start_date > DATEADD(dd, -60, SYSDATETIMEOFFSET()) AND bs.backup_finish_date IS NOT NULL AND abr.DatabaseName = bs.database_name AND DATEDIFF(mi, bs.backup_start_date, bs.backup_finish_date) > 1)';
         EXEC(@StringToExecute);
     END;
 
@@ -3217,7 +3217,7 @@ If one of them is a lead blocker, consider killing that query.'' AS HowToStopit,
 				END AS Details,
 			''Look through your source code to find the object creating these objects, and tune the creation and population to reduce fetches. See the URL for details.'' AS HowToStopIt
 		FROM tempdb.sys.dm_db_index_operational_stats(DB_ID(''tempdb''), NULL, NULL, NULL) os
-			LEFT OUTER JOIN #TempdbOperationalStats os_prior ON os.object_id = os_prior.object_id
+			LEFT OUTER JOIN #TempADMperationalStats os_prior ON os.object_id = os_prior.object_id
 				AND os.forwarded_fetch_count > os_prior.forwarded_fetch_count
 		WHERE os.database_id = DB_ID(''tempdb'')
 			AND os.forwarded_fetch_count - COALESCE(os_prior.forwarded_fetch_count,0) > 100
@@ -4970,7 +4970,7 @@ If one of them is a lead blocker, consider killing that query.'' AS HowToStopit,
     /* What's running right now? This is the first and last result set. */
     IF @SinceStartup = 0 AND @Seconds > 0 AND @ExpertMode = 1 AND @OutputType <> 'NONE' AND @OutputResultSets LIKE N'%BlitzWho_End%'
     BEGIN
-		IF OBJECT_ID('master.dbo.sp_BlitzWho') IS NULL AND OBJECT_ID('dbo.sp_BlitzWho') IS NULL
+		IF OBJECT_ID('master.ADM.sp_BlitzWho') IS NULL AND OBJECT_ID('ADM.sp_BlitzWho') IS NULL
 		BEGIN
 			PRINT N'sp_BlitzWho is not installed in the current database_files.  You can get a copy from http://FirstResponderKit.org';
 		END;
@@ -4989,15 +4989,15 @@ GO
 
 
 /* How to run it:
-EXEC dbo.sp_BlitzFirst
+EXEC ADM.sp_BlitzFirst
 
 With extra diagnostic info:
-EXEC dbo.sp_BlitzFirst @ExpertMode = 1;
+EXEC ADM.sp_BlitzFirst @ExpertMode = 1;
 
 Saving output to tables:
 EXEC sp_BlitzFirst
   @OutputDatabaseName = 'DBAtools'
-, @OutputSchemaName = 'dbo'
+, @OutputSchemaName = 'ADM'
 , @OutputTableName = 'BlitzFirst'
 , @OutputTableNameFileStats = 'BlitzFirst_FileStats'
 , @OutputTableNamePerfmonStats = 'BlitzFirst_PerfmonStats'
