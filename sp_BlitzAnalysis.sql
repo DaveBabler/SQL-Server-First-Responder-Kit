@@ -3,7 +3,7 @@ SET QUOTED_IDENTIFIER ON
 
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE [object_id] = OBJECT_ID(N'[ADM].[sp_BlitzAnalysis]') AND [type] in (N'P', N'PC'))
 BEGIN
-EXEC ADM.sp_executesql @statement = N'CREATE PROCEDURE [ADM].[sp_BlitzAnalysis] AS' 
+EXEC sp_executesql @statement = N'CREATE PROCEDURE [ADM].[sp_BlitzAnalysis] AS' 
 END
 GO
 

@@ -1,8 +1,8 @@
-IF OBJECT_ID('dbo.sp_Blitz') IS NULL
-  EXEC ('CREATE PROCEDURE dbo.sp_Blitz AS RETURN 0;');
+IF OBJECT_ID('ADM.sp_Blitz') IS NULL
+  EXEC ('CREATE PROCEDURE ADM.sp_Blitz AS RETURN 0;');
 GO
 
-ALTER PROCEDURE [dbo].[sp_Blitz]
+ALTER PROCEDURE [ADM].[sp_Blitz]
     @Help TINYINT = 0 ,
     @CheckUserDatabaseObjects TINYINT = 1 ,
     @CheckProcedureCache TINYINT = 0 ,
@@ -25,7 +25,7 @@ ALTER PROCEDURE [dbo].[sp_Blitz]
     @EmailProfile sysname = NULL ,
     @SummaryMode TINYINT = 0 ,
     @BringThePain TINYINT = 0 ,
-    @UsualDBOwner sysname = NULL ,
+    @UsualADMwner sysname = NULL ,
 	@SkipBlockingChecks TINYINT = 1 ,
     @Debug TINYINT = 0 ,
     @Version     VARCHAR(30) = NULL OUTPUT,
@@ -338,7 +338,7 @@ AS
 			    BEGIN TRY
 			        /* Try to fill the table for check 73 */
 					INSERT INTO #AlertInfo
-                    EXEC [master].[dbo].[sp_MSgetalertinfo] @includeaddresses = 0;
+                    EXEC [master].[ADM].[sp_MSgetalertinfo] @includeaddresses = 0;
 			
 			    	SET @SkipGetAlertInfo = 0; /*We can execute sp_MSgetalertinfo*/
 			    END TRY
@@ -418,7 +418,7 @@ AS
 						IF EXISTS
 						(
             	            SELECT	1/0
-            	            FROM	msdb.dbo.sysjobs
+            	            FROM	msdb.ADM.sysjobs
 						)
 						BEGIN
 							SET @SkipMSDB_jobs = 0; /*We have read permissions in the msdb database, and can view the objects*/
@@ -548,7 +548,7 @@ AS
 		might have some databases that you don't care about, or some checks you don't
 		want to run. Then, when you run sp_Blitz, you can specify these parameters:
 		@SkipChecksDatabase = 'DBAtools',
-		@SkipChecksSchema = 'dbo',
+		@SkipChecksSchema = 'ADM',
 		@SkipChecksTable = 'BlitzChecksToSkip'
 		Pass in the database, schema, and table that contains the list of checks you
 		want to skip. This part of the code checks those parameters, gets the list,
@@ -799,7 +799,7 @@ AS
 						INSERT INTO #SkipChecks (CheckID) VALUES (180); /* 180/181 are maintenance plans checks - Maint plans not available in RDS*/
 						INSERT INTO #SkipChecks (CheckID) VALUES (181); /*Find repetitive maintenance tasks*/
 
-						-- can check errorlog using rdsadmin.dbo.rds_read_error_log, so allow this check
+						-- can check errorlog using rdsadmin.ADM.rds_read_error_log, so allow this check
 						--INSERT INTO #SkipChecks (CheckID) VALUES (193); /* xp_readerrorlog checking for IFI */
 
 						INSERT INTO #SkipChecks (CheckID) VALUES (211); /* xp_regread not allowed - checking for power saving */
@@ -1326,7 +1326,7 @@ AS
 										    'Last backed up: '
 										    + COALESCE(CAST(MAX(b.backup_finish_date) AS VARCHAR(25)),'never') AS Details
 								    FROM    master.sys.databases d
-										    LEFT OUTER JOIN msdb.dbo.backupset b ON d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
+										    LEFT OUTER JOIN msdb.ADM.backupset b ON d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
 																      AND b.type = 'D'
 																      AND b.server_name = SERVERPROPERTY('ServerName') /*Backupset ran on current server  */
 								    WHERE   d.database_id <> 2  /* Bonus points if you know what that means */
@@ -1366,7 +1366,7 @@ AS
 										    'Last backed up: '
 										    + COALESCE(CAST(MAX(b.backup_finish_date) AS VARCHAR(25)),'never') AS Details
 								    FROM    master.sys.databases d
-										    LEFT OUTER JOIN msdb.dbo.backupset b ON d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
+										    LEFT OUTER JOIN msdb.ADM.backupset b ON d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
 																      AND b.type = 'D'
 								    WHERE   d.database_id <> 2  /* Bonus points if you know what that means */
 										    AND d.state NOT IN(1, 6, 10) /* Not currently offline or restoring, like log shipping databases */
@@ -1446,7 +1446,7 @@ AS
 													/* We couldn't get a value from the DBCC DBINFO data so let's check the msdb backup history information */
 														[ll].[Value] Is Null
 													AND NOT EXISTS ( SELECT *
-																	 FROM   msdb.dbo.backupset b
+																	 FROM   msdb.ADM.backupset b
 																	 WHERE  d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
 																				AND b.type = 'L'
 																				AND b.backup_finish_date >= DATEADD(dd,-7, GETDATE())
@@ -1488,8 +1488,8 @@ AS
 										'Log Backups to NUL' AS Finding ,
 										'https://www.brentozar.com/go/nul' AS URL ,
 										N'The transaction log file has been backed up ' +  CAST((SELECT count(*)
-														 FROM   msdb.dbo.backupset AS b INNER JOIN
-																msdb.dbo.backupmediafamily AS bmf
+														 FROM   msdb.ADM.backupset AS b INNER JOIN
+																msdb.ADM.backupmediafamily AS bmf
 																	ON	b.media_set_id = bmf.media_set_id
 														 WHERE  b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS = d.name COLLATE SQL_Latin1_General_CP1_CI_AS
 																AND bmf.physical_device_name = 'NUL'
@@ -1508,8 +1508,8 @@ AS
 										--					FROM  #SkipChecks
 										--					WHERE CheckID IS NULL OR CheckID = 2)
 										AND EXISTS (	 SELECT *
-														 FROM   msdb.dbo.backupset AS b INNER JOIN
-																msdb.dbo.backupmediafamily AS bmf
+														 FROM   msdb.ADM.backupset AS b INNER JOIN
+																msdb.ADM.backupmediafamily AS bmf
 																	ON	b.media_set_id = bmf.media_set_id
 														 WHERE  d.name COLLATE SQL_Latin1_General_CP1_CI_AS = b.database_name COLLATE SQL_Latin1_General_CP1_CI_AS
 																AND bmf.physical_device_name = 'NUL'
@@ -1591,12 +1591,12 @@ AS
 										CAST(COUNT(1) AS VARCHAR(50)) + ' backups done on drive '
 										+ UPPER(LEFT(bmf.physical_device_name, 3))
 										+ ' in the last two weeks, where database files also live. This represents a serious risk if that array fails.' Details
-								FROM    msdb.dbo.backupmediafamily AS bmf
-										INNER JOIN msdb.dbo.backupset AS bs ON bmf.media_set_id = bs.media_set_id
+								FROM    msdb.ADM.backupmediafamily AS bmf
+										INNER JOIN msdb.ADM.backupset AS bs ON bmf.media_set_id = bs.media_set_id
 																  AND bs.backup_start_date >= ( DATEADD(dd,
 																  -14, GETDATE()) )
 										/* Filter out databases that were recently restored: */
-										LEFT OUTER JOIN msdb.dbo.restorehistory rh ON bs.database_name = rh.destination_database_name AND rh.restore_date > DATEADD(dd, -14, GETDATE())
+										LEFT OUTER JOIN msdb.ADM.restorehistory rh ON bs.database_name = rh.destination_database_name AND rh.restore_date > DATEADD(dd, -14, GETDATE())
 								WHERE   UPPER(LEFT(bmf.physical_device_name, 3)) <> 'HTT' AND
                                         bmf.physical_device_name NOT LIKE '\\%' AND -- GitHub Issue #2141
                                         @IsWindowsOperatingSystem = 1 AND -- GitHub Issue #1995
@@ -1657,7 +1657,7 @@ AS
 								''https://www.brentozar.com/go/tde'' AS URL,
 								''The certificate '' + c.name + '' is used to encrypt database backups. Last backup date: '' + COALESCE(CAST(c.pvt_key_last_backup_date AS VARCHAR(100)), ''Never'') AS Details
 								FROM sys.certificates c
-                                INNER JOIN msdb.dbo.backupset bs ON c.thumbprint = bs.encryptor_thumbprint
+                                INNER JOIN msdb.ADM.backupset bs ON c.thumbprint = bs.encryptor_thumbprint
                                 WHERE pvt_key_last_backup_date IS NULL OR pvt_key_last_backup_date <= DATEADD(dd, -30, GETDATE()) OPTION (RECOMPILE);';
 							
 							IF @Debug = 2 AND @StringToExecute IS NOT NULL PRINT @StringToExecute;
@@ -1670,7 +1670,7 @@ AS
 								FROM    #SkipChecks
 								WHERE   DatabaseName IS NULL AND CheckID = 3 )
 					BEGIN
-						IF DATEADD(dd, -60, GETDATE()) > (SELECT TOP 1 backup_start_date FROM msdb.dbo.backupset ORDER BY backup_start_date)
+						IF DATEADD(dd, -60, GETDATE()) > (SELECT TOP 1 backup_start_date FROM msdb.ADM.backupset ORDER BY backup_start_date)
 
 						BEGIN
 
@@ -1694,8 +1694,8 @@ AS
 										'https://www.brentozar.com/go/history' AS URL ,
 										( 'Database backup history retained back to '
 										  + CAST(bs.backup_start_date AS VARCHAR(20)) ) AS Details
-								FROM    msdb.dbo.backupset bs
-                                LEFT OUTER JOIN msdb.dbo.restorehistory rh ON bs.database_name = rh.destination_database_name
+								FROM    msdb.ADM.backupset bs
+                                LEFT OUTER JOIN msdb.ADM.restorehistory rh ON bs.database_name = rh.destination_database_name
                                 WHERE rh.destination_database_name IS NULL
 								ORDER BY bs.backup_start_date ASC;
 						END;
@@ -1705,7 +1705,7 @@ AS
 								FROM    #SkipChecks
 								WHERE   DatabaseName IS NULL AND CheckID = 186 )
 					BEGIN
-						IF DATEADD(dd, -2, GETDATE()) < (SELECT TOP 1 backup_start_date FROM msdb.dbo.backupset ORDER BY backup_start_date)
+						IF DATEADD(dd, -2, GETDATE()) < (SELECT TOP 1 backup_start_date FROM msdb.ADM.backupset ORDER BY backup_start_date)
 
 						BEGIN
 							
@@ -1729,7 +1729,7 @@ AS
 											'https://www.brentozar.com/go/history' AS URL ,
 											( 'Database backup history only retained back to '
 											  + CAST(bs.backup_start_date AS VARCHAR(20)) ) AS Details
-									FROM    msdb.dbo.backupset bs
+									FROM    msdb.ADM.backupset bs
 									ORDER BY backup_start_date ASC;
 						END;
 					END;
@@ -1738,7 +1738,7 @@ AS
 								FROM    #SkipChecks
 								WHERE   DatabaseName IS NULL AND CheckID = 178 )
 					AND EXISTS (SELECT *
-									FROM msdb.dbo.backupset bs
+									FROM msdb.ADM.backupset bs
 									WHERE bs.type = 'D'
 									AND bs.backup_size >= 50000000000 /* At least 50GB */
 									AND DATEDIFF(SECOND, bs.backup_start_date, bs.backup_finish_date) <= 60 /* Backup took less than 60 seconds */
@@ -1761,7 +1761,7 @@ AS
 										'Snapshot Backups Occurring' AS Finding ,
 										'https://www.brentozar.com/go/snaps' AS URL ,
 										( CAST(COUNT(*) AS VARCHAR(20)) + ' snapshot-looking backups have occurred in the last two weeks, indicating that IO may be freezing up.') AS Details
-								FROM msdb.dbo.backupset bs
+								FROM msdb.ADM.backupset bs
 								WHERE bs.type = 'D'
 								AND bs.backup_size >= 50000000000 /* At least 50GB */
 								AND DATEDIFF(SECOND, bs.backup_start_date, bs.backup_finish_date) <= 60 /* Backup took less than 60 seconds */
@@ -1789,7 +1789,7 @@ AS
 										'Snapshotting Too Many Databases' AS Finding ,
 										'https://www.brentozar.com/go/toomanysnaps' AS URL ,
 										( CAST(SUM(1) AS VARCHAR(20)) + ' databases snapshotted at once in the last two weeks, indicating that IO may be freezing up. Microsoft does not recommend VSS snaps for 35 or more databases.') AS Details
-								FROM msdb.dbo.backupset bs
+								FROM msdb.ADM.backupset bs
 								WHERE bs.type = 'D'
 								AND bs.backup_finish_date >= DATEADD(DAY, -14, GETDATE()) /* In the last 2 weeks */
 								GROUP BY bs.backup_finish_date
@@ -1938,7 +1938,7 @@ AS
 										( 'Job [' + j.name + '] is owned by ['
 										  + SUSER_SNAME(j.owner_sid)
 										  + '] - meaning if their login is disabled or not available due to Active Directory problems, the job will stop working.' ) AS Details
-								FROM    msdb.dbo.sysjobs j
+								FROM    msdb.ADM.sysjobs j
 								WHERE   j.enabled = 1
 										AND SUSER_SNAME(j.owner_sid) <> SUSER_SNAME(0x01);
 					END;
@@ -2790,7 +2790,7 @@ AS
 								WHERE   DatabaseName IS NULL AND CheckID = 30 )
 					BEGIN
 						IF ( SELECT COUNT(*)
-							 FROM   msdb.dbo.sysalerts
+							 FROM   msdb.ADM.sysalerts
 							 WHERE  severity BETWEEN 19 AND 25
 						   ) < 7
 
@@ -2820,7 +2820,7 @@ AS
 								WHERE   DatabaseName IS NULL AND CheckID = 59 )
 					BEGIN
 						IF EXISTS ( SELECT  *
-									FROM    msdb.dbo.sysalerts
+									FROM    msdb.ADM.sysalerts
 									WHERE   enabled = 1
 											AND COALESCE(has_notification, 0) = 0
 											AND (job_id IS NULL OR job_id = 0x))
@@ -2852,7 +2852,7 @@ AS
 								WHERE   DatabaseName IS NULL AND CheckID = 96 )
 					BEGIN
 						IF NOT EXISTS ( SELECT  *
-										FROM    msdb.dbo.sysalerts
+										FROM    msdb.ADM.sysalerts
 										WHERE   message_id IN ( 823, 824, 825 ) )
 							
 							BEGIN;
@@ -2882,7 +2882,7 @@ AS
 								WHERE   DatabaseName IS NULL AND CheckID = 61 )
 					BEGIN
 						IF NOT EXISTS ( SELECT  *
-										FROM    msdb.dbo.sysalerts
+										FROM    msdb.ADM.sysalerts
 										WHERE   severity BETWEEN 19 AND 25 )
 							
 							BEGIN
@@ -2914,7 +2914,7 @@ AS
 								WHERE   DatabaseName IS NULL AND CheckID = 98 )
 					BEGIN
 						IF EXISTS ( SELECT  name
-									FROM    msdb.dbo.sysalerts
+									FROM    msdb.ADM.sysalerts
 									WHERE   enabled = 0 )
 							
 							BEGIN
@@ -2936,7 +2936,7 @@ AS
 											'https://www.brentozar.com/go/alert' AS URL ,
 											( 'The following Alert is disabled, please review and enable if desired: '
 											  + name ) AS Details
-									FROM    msdb.dbo.sysalerts
+									FROM    msdb.ADM.sysalerts
 									WHERE   enabled = 0;
 			END;
 		END;
@@ -2969,7 +2969,7 @@ AS
 				,'https://www.brentozar.com/go/alert' AS [URL]
 				,('The following Alert is not including detailed event descriptions in its output messages: ' + QUOTENAME([name])
 				+ '. You can fix it by ticking the relevant boxes in its Properties --> Options page.') AS Details
-			FROM msdb.dbo.sysalerts
+			FROM msdb.ADM.sysalerts
 			WHERE [enabled] = 1
 			  AND include_event_description = 0 --bitmask: 1 = email, 2 = pager, 4 = net send
 			;
@@ -2981,7 +2981,7 @@ AS
 						WHERE   DatabaseName IS NULL AND CheckID = 31 )
 		BEGIN;
 						IF NOT EXISTS ( SELECT  *
-										FROM    msdb.dbo.sysoperators
+										FROM    msdb.ADM.sysoperators
 										WHERE   enabled = 1 )
 							
 							BEGIN
@@ -3114,8 +3114,8 @@ AS
 		  ''Corruption'' AS FindingsGroup ,
 		  ''Database Corruption Detected'' AS Finding ,
 		  ''https://www.brentozar.com/go/repair'' AS URL ,
-		  ( ''SQL Server has detected at least one corrupt page in the last 30 days. For more information, query the system table msdb.dbo.suspect_pages.'' ) AS Details
-		  FROM    msdb.dbo.suspect_pages sp
+		  ( ''SQL Server has detected at least one corrupt page in the last 30 days. For more information, query the system table msdb.ADM.suspect_pages.'' ) AS Details
+		  FROM    msdb.ADM.suspect_pages sp
 		  INNER JOIN master.sys.databases db ON sp.database_id = db.database_id
 		  WHERE   sp.last_update_date >= DATEADD(dd, -30, GETDATE())  OPTION (RECOMPILE);';
 
@@ -3570,8 +3570,8 @@ AS
 
 						IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 55) WITH NOWAIT;
 
-						IF @UsualDBOwner IS NULL
-							SET @UsualDBOwner = SUSER_SNAME(0x01);
+						IF @UsualADMwner IS NULL
+							SET @UsualADMwner = SUSER_SNAME(0x01);
 
 						INSERT  INTO #BlitzResults
 								( CheckID ,
@@ -3586,13 +3586,13 @@ AS
 										[name] AS DatabaseName ,
 										230 AS Priority ,
 										'Security' AS FindingsGroup ,
-										'Database Owner <> ' + @UsualDBOwner AS Finding , 
+										'Database Owner <> ' + @UsualADMwner AS Finding , 
 										'https://www.brentozar.com/go/owndb' AS URL ,
 										( 'Database name: ' + [name] + '   '
 										  + 'Owner name: ' + SUSER_SNAME(owner_sid) ) AS Details
 								FROM    sys.databases
 								WHERE (((SUSER_SNAME(owner_sid) <> SUSER_SNAME(0x01)) AND (name IN (N'master', N'model', N'msdb', N'tempdb')))
-										OR ((SUSER_SNAME(owner_sid) <> @UsualDBOwner) AND (name NOT IN (N'master', N'model', N'msdb', N'tempdb')))
+										OR ((SUSER_SNAME(owner_sid) <> @UsualADMwner) AND (name NOT IN (N'master', N'model', N'msdb', N'tempdb')))
 									  )
 								AND name NOT IN ( SELECT DISTINCT DatabaseName
 												  FROM    #SkipChecks
@@ -3652,9 +3652,9 @@ AS
 										'https://www.brentozar.com/go/startup' AS URL ,
 										( 'Job [' + j.name
 										  + '] runs automatically when SQL Server Agent starts up.  Make sure you know exactly what this job is doing, because it could pose a security risk.' ) AS Details
-								FROM    msdb.dbo.sysschedules sched
-										JOIN msdb.dbo.sysjobschedules jsched ON sched.schedule_id = jsched.schedule_id
-										JOIN msdb.dbo.sysjobs j ON jsched.job_id = j.job_id
+								FROM    msdb.ADM.sysschedules sched
+										JOIN msdb.ADM.sysjobschedules jsched ON sched.schedule_id = jsched.schedule_id
+										JOIN msdb.ADM.sysjobs j ON jsched.job_id = j.job_id
 								WHERE   sched.freq_type = 64
 								        AND sched.enabled = 1;
 					END;
@@ -3770,7 +3770,7 @@ AS
 										'https://www.brentozar.com/go/alerts' AS URL ,
 										'The job ' + [name]
 										+ ' has not been set up to notify an operator if it fails.' AS Details
-								FROM    msdb.[dbo].[sysjobs] j
+								FROM    msdb.[ADM].[sysjobs] j
 								WHERE   j.enabled = 1
 										AND j.notify_email_operator_id = 0
 										AND j.notify_netsend_operator_id = 0
@@ -4007,8 +4007,8 @@ AS
 												AND dm.mirroring_role IS NULL
 											WHERE ( d.[state] = 1
 											OR (d.[state] = 0 AND d.[is_in_standby] = 1) )
-											AND NOT EXISTS(SELECT * FROM msdb.dbo.restorehistory rh
-											INNER JOIN msdb.dbo.backupset bs ON rh.backup_set_id = bs.backup_set_id
+											AND NOT EXISTS(SELECT * FROM msdb.ADM.restorehistory rh
+											INNER JOIN msdb.ADM.backupset bs ON rh.backup_set_id = bs.backup_set_id
 											WHERE d.[name] COLLATE SQL_Latin1_General_CP1_CI_AS = rh.destination_database_name COLLATE SQL_Latin1_General_CP1_CI_AS
 											AND rh.restore_date >= DATEADD(dd, -2, GETDATE()));
 
@@ -4068,7 +4068,7 @@ AS
 											''Uncompressed full backups have happened recently, and backup compression is not turned on at the server level. Backup compression is included with SQL Server 2008R2 & newer, even in Standard Edition. We recommend turning backup compression on by default so that ad-hoc backups will get compressed.''
 											FROM sys.configurations
 											WHERE configuration_id = 1579 AND CAST(value_in_use AS INT) = 0
-                                            AND EXISTS (SELECT * FROM msdb.dbo.backupset WHERE backup_size = compressed_backup_size AND type = ''D'' AND backup_finish_date >= DATEADD(DD, -14, GETDATE())) OPTION (RECOMPILE);';
+                                            AND EXISTS (SELECT * FROM msdb.ADM.backupset WHERE backup_size = compressed_backup_size AND type = ''D'' AND backup_finish_date >= DATEADD(DD, -14, GETDATE())) OPTION (RECOMPILE);';
 										
 										IF @Debug = 2 AND @StringToExecute IS NOT NULL PRINT @StringToExecute;
 										IF @Debug = 2 AND @StringToExecute IS NULL PRINT '@StringToExecute has gone NULL, for some reason.';
@@ -4338,7 +4338,7 @@ AS
 								INSERT INTO #BlitzResults(CheckID, Priority, FindingsGroup, Finding, URL, Details)
                                     SELECT TOP 1 217, 100, 'Reliability', 'Cumulative Update Available', COALESCE(v.Url, 'https://SQLServerUpdates.com/'),
 										v.MinorVersionName + ' was released on ' + CAST(CONVERT(DATETIME, v.ReleaseDate, 112) AS VARCHAR(100))
-                                    FROM dbo.SqlServerVersions v
+                                    FROM ADM.SqlServerVersions v
                                     WHERE v.MajorVersionNumber = @ProductVersionMajor
                                       AND v.MinorVersionNumber > @ProductVersionMinor
                                     ORDER BY v.MinorVersionNumber DESC;
@@ -5968,7 +5968,7 @@ IF @ProductVersionMajor >= 10
 							SELECT [name]
 								, [id] -- ID required to link maintenace plan with jobs and jobhistory (sp_Blitz Issue #776)							
 								, CAST(CAST([packagedata] AS VARBINARY(MAX)) AS XML) AS [maintenance_plan_xml]
-							FROM [msdb].[dbo].[sysssispackages]
+							FROM [msdb].[ADM].[sysssispackages]
 							WHERE [packagetype] = 6
 						   )
 							INSERT    INTO [#BlitzResults]
@@ -5994,22 +5994,22 @@ IF @ProductVersionMajor >= 10
 						+ CASE WHEN COALESCE(ssc.name,'0') != '0' THEN + ' (Schedule: [' + ssc.name + '])' ELSE + '' END AS [Details]
 						FROM [maintenance_plan_steps] [mps]
 							CROSS APPLY [maintenance_plan_xml].[nodes]('//dts:Executables/dts:Executable') [t]([c])
-                    	join msdb.dbo.sysmaintplan_subplans as sms
+                    	join msdb.ADM.sysmaintplan_subplans as sms
                     		on mps.id = sms.plan_id
-                    	JOIN msdb.dbo.sysjobs j
+                    	JOIN msdb.ADM.sysjobs j
                     		on sms.job_id = j.job_id
-                    	LEFT OUTER JOIN msdb.dbo.sysjobsteps AS step
+                    	LEFT OUTER JOIN msdb.ADM.sysjobsteps AS step
                     		ON j.job_id = step.job_id
-                    	LEFT OUTER JOIN msdb.dbo.sysjobschedules AS sjsc
+                    	LEFT OUTER JOIN msdb.ADM.sysjobschedules AS sjsc
                     		ON j.job_id = sjsc.job_id
-                    	LEFT OUTER JOIN msdb.dbo.sysschedules AS ssc
+                    	LEFT OUTER JOIN msdb.ADM.sysschedules AS ssc
                     		ON sjsc.schedule_id = ssc.schedule_id
                     		AND sjsc.job_id = j.job_id
-                    	LEFT OUTER JOIN msdb.dbo.sysjobhistory AS sjh
+                    	LEFT OUTER JOIN msdb.ADM.sysjobhistory AS sjh
                     		ON j.job_id = sjh.job_id
                     		AND step.step_id = sjh.step_id
-                    		AND sjh.run_date IN (SELECT max(sjh2.run_date) FROM msdb.dbo.sysjobhistory AS sjh2 WHERE sjh2.job_id = j.job_id) -- get the latest entry date
-                    		AND sjh.run_time IN (SELECT max(sjh3.run_time) FROM msdb.dbo.sysjobhistory AS sjh3 WHERE sjh3.job_id = j.job_id AND sjh3.run_date = sjh.run_date) -- get the latest entry time
+                    		AND sjh.run_date IN (SELECT max(sjh2.run_date) FROM msdb.ADM.sysjobhistory AS sjh2 WHERE sjh2.job_id = j.job_id) -- get the latest entry date
+                    		AND sjh.run_time IN (SELECT max(sjh3.run_time) FROM msdb.ADM.sysjobhistory AS sjh3 WHERE sjh3.job_id = j.job_id AND sjh3.run_date = sjh.run_date) -- get the latest entry time
 						WHERE [c].[value]('(@dts:ObjectName)', 'VARCHAR(128)') = 'Shrink Database Task';
 
 						END;
@@ -6026,7 +6026,7 @@ IF @ProductVersionMajor >= 10
 						,[maintenance_plan_steps] AS (
 							SELECT [name]
 								, CAST(CAST([packagedata] AS VARBINARY(MAX)) AS XML) AS [maintenance_plan_xml]
-							FROM [msdb].[dbo].[sysssispackages]
+							FROM [msdb].[ADM].[sysssispackages]
 							WHERE [packagetype] = 6
 							), [maintenance_plan_table] AS (
 						SELECT [mps].[name]
@@ -6111,7 +6111,7 @@ IF @ProductVersionMajor >= 10
 						50 AS [Priority] ,
 						'Reliability' AS [FindingsGroup] ,
 						'TempDB File Error' AS [Finding] ,
-						'https://www.brentozar.com/go/tempdboops' AS [URL] ,
+						'https://www.brentozar.com/go/tempADMops' AS [URL] ,
 						'Mismatch between the number of TempDB files in sys.master_files versus tempdb.sys.database_files' AS [Details];
 				END;
 
@@ -6718,7 +6718,7 @@ IF @ProductVersionMajor >= 10
 						
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 99) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF EXISTS (SELECT * FROM  sys.tables WITH (NOLOCK) WHERE name = ''sysmergepublications'' ) IF EXISTS ( SELECT * FROM sysmergepublications WITH (NOLOCK) WHERE retention = 0)   INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details) SELECT DISTINCT 99, DB_NAME(), 110, ''Performance'', ''Infinite merge replication metadata retention period'', ''https://www.brentozar.com/go/merge'', (''The ['' + DB_NAME() + ''] database has merge replication metadata retention period set to infinite - this can be the case of significant performance issues.'')';
+								EXEC ADM.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF EXISTS (SELECT * FROM  sys.tables WITH (NOLOCK) WHERE name = ''sysmergepublications'' ) IF EXISTS ( SELECT * FROM sysmergepublications WITH (NOLOCK) WHERE retention = 0)   INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details) SELECT DISTINCT 99, DB_NAME(), 110, ''Performance'', ''Infinite merge replication metadata retention period'', ''https://www.brentozar.com/go/merge'', (''The ['' + DB_NAME() + ''] database has merge replication metadata retention period set to infinite - this can be the case of significant performance issues.'')';
 					        END;
 				        /*
 				        Note that by using sp_MSforeachdb, we're running the query in all
@@ -6737,7 +6737,7 @@ IF @ProductVersionMajor >= 10
 
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 163) WITH NOWAIT;
 
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
                                         SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 			                            INSERT INTO #BlitzResults
 			                            (CheckID,
@@ -6802,7 +6802,7 @@ IF @ProductVersionMajor >= 10
 
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 235) WITH NOWAIT;
 
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
                                         SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 			                            INSERT INTO #BlitzResults
 			                            (CheckID,
@@ -6832,7 +6832,7 @@ IF @ProductVersionMajor >= 10
 						
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 41) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'use [?];
+								EXEC ADM.sp_MSforeachdb 'use [?];
 		                              SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                       INSERT INTO #BlitzResults
 		                              (CheckID,
@@ -6863,7 +6863,7 @@ IF @ProductVersionMajor >= 10
 						
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 42) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'use [?];
+								EXEC ADM.sp_MSforeachdb 'use [?];
 			                            SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                         INSERT INTO #BlitzResults
 			                            (CheckID,
@@ -6952,7 +6952,7 @@ IF @ProductVersionMajor >= 10
 								
 										IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 33) WITH NOWAIT;
 										
-										EXEC dbo.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+										EXEC ADM.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                             INSERT INTO #BlitzResults
 					                                (CheckID,
 					                                DatabaseName,
@@ -7009,7 +7009,7 @@ IF @ProductVersionMajor >= 10
 										        OR is_distributor = 1);
 
 						        /* Method B: check subscribers for MSreplication_objects tables */
-						        EXEC dbo.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+						        EXEC ADM.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                     INSERT INTO #BlitzResults
 										        (CheckID,
 										        DatabaseName,
@@ -7026,7 +7026,7 @@ IF @ProductVersionMajor >= 10
 							          ''https://www.brentozar.com/go/repl'',
 							          (''['' + DB_NAME() + ''] has MSreplication_objects tables in it, indicating it is a replication subscriber.'')
 							          FROM [?].sys.tables
-							          WHERE name = ''dbo.MSreplication_objects'' AND ''?'' <> ''master'' OPTION (RECOMPILE)';
+							          WHERE name = ''ADM.MSreplication_objects'' AND ''?'' <> ''master'' OPTION (RECOMPILE)';
 
 					        END;
 
@@ -7037,7 +7037,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 32) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 			SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
             INSERT INTO #BlitzResults
 			(CheckID,
@@ -7067,7 +7067,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 164) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 			SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 			SET QUOTED_IDENTIFIER ON;
             INSERT INTO #BlitzResults
@@ -7095,7 +7095,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 46) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 		  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
           INSERT INTO #BlitzResults
 				(CheckID,
@@ -7123,7 +7123,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 47) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 		  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
           INSERT INTO #BlitzResults
 				(CheckID,
@@ -7151,7 +7151,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 48) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 		  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
           INSERT INTO #BlitzResults
 				(CheckID,
@@ -7179,7 +7179,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 56) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 		  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
           INSERT INTO #BlitzResults
 				(CheckID,
@@ -7211,7 +7211,7 @@ IF @ProductVersionMajor >= 10
 										
 										IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 95) WITH NOWAIT;
 										
-										EXEC dbo.sp_MSforeachdb 'USE [?];
+										EXEC ADM.sp_MSforeachdb 'USE [?];
 			SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
             INSERT INTO #BlitzResults
 				  (CheckID,
@@ -7274,7 +7274,7 @@ IF @ProductVersionMajor >= 10
                                     SELECT DISTINCT DBName = DB_Name(), SPName = SO.name, SM.is_recompiled, ISR.SPECIFIC_SCHEMA
                                     FROM sys.sql_modules AS SM
                                     LEFT OUTER JOIN master.sys.databases AS sDB ON SM.object_id = DB_id()
-                                    LEFT OUTER JOIN dbo.sysobjects AS SO ON SM.object_id = SO.id and type = ''P''
+                                    LEFT OUTER JOIN ADM.sysobjects AS SO ON SM.object_id = SO.id and type = ''P''
                                     LEFT OUTER JOIN INFORMATION_SCHEMA.ROUTINES AS ISR on ISR.Routine_Name = SO.name AND ISR.SPECIFIC_CATALOG = DB_Name()
                                     WHERE SM.is_recompiled=1  OPTION (RECOMPILE); /* oh the rich irony of recompile here */
                                     ';
@@ -7306,7 +7306,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 86) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?]; INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details) SELECT DISTINCT 86, DB_NAME(), 230, ''Security'', ''Elevated Permissions on a Database'', ''https://www.brentozar.com/go/elevated'', (''In ['' + DB_NAME() + ''], user ['' + u.name + '']  has the role ['' + g.name + ''].  This user can perform tasks beyond just reading and writing data.'') FROM (SELECT memberuid = convert(int, member_principal_id), groupuid = convert(int, role_principal_id) FROM [?].sys.database_role_members) m inner join [?].dbo.sysusers u on m.memberuid = u.uid inner join sysusers g on m.groupuid = g.uid where u.name <> ''dbo'' and g.name in (''db_owner'' , ''db_accessadmin'' , ''db_securityadmin'' , ''db_ddladmin'') OPTION (RECOMPILE);';
+								EXEC ADM.sp_MSforeachdb 'USE [?]; INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details) SELECT DISTINCT 86, DB_NAME(), 230, ''Security'', ''Elevated Permissions on a Database'', ''https://www.brentozar.com/go/elevated'', (''In ['' + DB_NAME() + ''], user ['' + u.name + '']  has the role ['' + g.name + ''].  This user can perform tasks beyond just reading and writing data.'') FROM (SELECT memberuid = convert(int, member_principal_id), groupuid = convert(int, role_principal_id) FROM [?].sys.database_role_members) m inner join [?].ADM.sysusers u on m.memberuid = u.uid inner join sysusers g on m.groupuid = g.uid where u.name <> ''ADM'' and g.name in (''db_owner'' , ''db_accessadmin'' , ''db_securityadmin'' , ''db_ddladmin'') OPTION (RECOMPILE);';
 							END;
 
 							/*Check for non-aligned indexes in partioned databases*/
@@ -7318,7 +7318,7 @@ IF @ProductVersionMajor >= 10
 												
 												IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 72) WITH NOWAIT;
 												
-												EXEC dbo.sp_MSforeachdb 'USE [?];
+												EXEC ADM.sp_MSforeachdb 'USE [?];
 								SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                 insert into #partdb(dbname, objectname, type_desc)
 								SELECT distinct db_name(DB_ID()) as DBName,o.name Object_Name,ds.type_desc
@@ -7368,7 +7368,7 @@ IF @ProductVersionMajor >= 10
 							
 							  IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 113) WITH NOWAIT;
 							
-							  EXEC dbo.sp_MSforeachdb 'USE [?];
+							  EXEC ADM.sp_MSforeachdb 'USE [?];
 							  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                               INSERT INTO #BlitzResults
 									(CheckID,
@@ -7395,7 +7395,7 @@ IF @ProductVersionMajor >= 10
 								
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 115) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?];
+								EXEC ADM.sp_MSforeachdb 'USE [?];
 		  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
           INSERT INTO #BlitzResults
 				(CheckID,
@@ -7428,7 +7428,7 @@ IF @ProductVersionMajor >= 10
 									  INNER JOIN sys.all_objects o ON c.object_id = o.object_id
 									  WHERE c.name = 'is_temporary' AND o.name = 'stats')
 										
-										EXEC dbo.sp_MSforeachdb 'USE [?];
+										EXEC ADM.sp_MSforeachdb 'USE [?];
 												SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                                 INSERT INTO #BlitzResults
 													(CheckID,
@@ -7449,7 +7449,7 @@ IF @ProductVersionMajor >= 10
                                                 HAVING SUM(1) > 0  OPTION (RECOMPILE);';
 
 									ELSE
-										EXEC dbo.sp_MSforeachdb 'USE [?];
+										EXEC ADM.sp_MSforeachdb 'USE [?];
 												SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
                                                 INSERT INTO #BlitzResults
 													(CheckID,
@@ -7553,7 +7553,7 @@ IF @ProductVersionMajor >= 10
 						
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 80) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?]; 
+								EXEC ADM.sp_MSforeachdb 'USE [?]; 
                                     SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; 
                                     INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details) 
                                     SELECT DISTINCT 80, DB_NAME(), 170, ''Reliability'', ''Max File Size Set'', ''https://www.brentozar.com/go/maxsize'', 
@@ -7583,7 +7583,7 @@ IF @ProductVersionMajor >= 10
 						
 								IF @Debug IN (1, 2) RAISERROR('Running CheckId [%d].', 0, 1, 74) WITH NOWAIT;
 								
-								EXEC dbo.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF EXISTS(SELECT * FROM sys.indexes WHERE type IN (5,6)) INSERT INTO #TemporaryDatabaseResults (DatabaseName, Finding) VALUES (DB_NAME(), ''Yup'') OPTION (RECOMPILE);';
+								EXEC ADM.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF EXISTS(SELECT * FROM sys.indexes WHERE type IN (5,6)) INSERT INTO #TemporaryDatabaseResults (DatabaseName, Finding) VALUES (DB_NAME(), ''Yup'') OPTION (RECOMPILE);';
 								IF EXISTS (SELECT * FROM #TemporaryDatabaseResults) SET @ColumnStoreIndexesInUse = 1;
 					        END;
 
@@ -7639,7 +7639,7 @@ IF @ProductVersionMajor >= 10
 									SELECT 23, 'VERBOSE_TRUNCATION_WARNINGS', '1', NULL, 254
 									UNION ALL
 									SELECT 24, 'LAST_QUERY_PLAN_STATS', '0', NULL, 255;
-						        EXEC dbo.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details)
+						        EXEC ADM.sp_MSforeachdb 'USE [?]; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; INSERT INTO #BlitzResults (CheckID, DatabaseName, Priority, FindingsGroup, Finding, URL, Details)
 									SELECT def1.CheckID, DB_NAME(), 210, ''Non-Default Database Scoped Config'', dsc.[name], ''https://www.brentozar.com/go/dbscope'', (''Set value: '' + COALESCE(CAST(dsc.value AS NVARCHAR(100)),''Empty'') + '' Default: '' + COALESCE(CAST(def1.default_value AS NVARCHAR(100)),''Empty'') + '' Set value for secondary: '' + COALESCE(CAST(dsc.value_for_secondary AS NVARCHAR(100)),''Empty'') + '' Default value for secondary: '' + COALESCE(CAST(def1.default_value_for_secondary AS NVARCHAR(100)),''Empty''))
 									FROM [?].sys.database_scoped_configurations dsc
 									INNER JOIN #DatabaseScopedConfigurationDefaults def1 ON dsc.configuration_id = def1.configuration_id
@@ -8568,18 +8568,18 @@ IF @ProductVersionMajor >= 10
 										+ step.[step_name]
 										+ '] has SHRINKDATABASE or SHRINKFILE, which may be causing database fragmentation.'
 										+ CASE WHEN COALESCE(ssc.name,'0') != '0' THEN + ' (Schedule: [' + ssc.name + '])' ELSE + '' END AS Details
-								FROM    msdb.dbo.sysjobs j
-										INNER JOIN msdb.dbo.sysjobsteps step ON j.job_id = step.job_id
-										LEFT OUTER JOIN msdb.dbo.sysjobschedules AS sjsc
+								FROM    msdb.ADM.sysjobs j
+										INNER JOIN msdb.ADM.sysjobsteps step ON j.job_id = step.job_id
+										LEFT OUTER JOIN msdb.ADM.sysjobschedules AS sjsc
 										    ON j.job_id = sjsc.job_id
-										LEFT OUTER JOIN msdb.dbo.sysschedules AS ssc
+										LEFT OUTER JOIN msdb.ADM.sysschedules AS ssc
 										    ON sjsc.schedule_id = ssc.schedule_id
 										    AND sjsc.job_id = j.job_id
-										LEFT OUTER JOIN msdb.dbo.sysjobhistory AS sjh
+										LEFT OUTER JOIN msdb.ADM.sysjobhistory AS sjh
 										    ON j.job_id = sjh.job_id
 										    AND step.step_id = sjh.step_id
-										    AND sjh.run_date IN (SELECT max(sjh2.run_date) FROM msdb.dbo.sysjobhistory AS sjh2 WHERE sjh2.job_id = j.job_id) -- get the latest entry date
-										    AND sjh.run_time IN (SELECT max(sjh3.run_time) FROM msdb.dbo.sysjobhistory AS sjh3 WHERE sjh3.job_id = j.job_id AND sjh3.run_date = sjh.run_date) -- get the latest entry time
+										    AND sjh.run_date IN (SELECT max(sjh2.run_date) FROM msdb.ADM.sysjobhistory AS sjh2 WHERE sjh2.job_id = j.job_id) -- get the latest entry date
+										    AND sjh.run_time IN (SELECT max(sjh3.run_time) FROM msdb.ADM.sysjobhistory AS sjh3 WHERE sjh3.job_id = j.job_id AND sjh3.run_date = sjh.run_date) -- get the latest entry time
 								WHERE   step.command LIKE N'%SHRINKDATABASE%'
 										OR step.command LIKE N'%SHRINKFILE%';
 					END;
@@ -8635,7 +8635,7 @@ IF @ProductVersionMajor >= 10
 										'Agent Jobs Starting Simultaneously' AS Finding ,
 										'https://www.brentozar.com/go/busyagent/' AS URL ,
 										( 'Multiple SQL Server Agent jobs are configured to start simultaneously. For detailed schedule listings, see the query in the URL.' ) AS Details
-								FROM    msdb.dbo.sysjobactivity
+								FROM    msdb.ADM.sysjobactivity
 								WHERE start_execution_date > DATEADD(dd, -14, GETDATE())
 								GROUP BY start_execution_date HAVING COUNT(*) > 1;
 					END;
@@ -8826,7 +8826,7 @@ IF @ProductVersionMajor >= 10 AND  NOT EXISTS ( SELECT  1
         					IF @Debug = 2 AND @StringToExecute IS NOT NULL PRINT @StringToExecute;
         					IF @Debug = 2 AND @StringToExecute IS NULL PRINT '@StringToExecute has gone NULL, for some reason.';
 	
-       						EXEC dbo.sp_executesql
+       						EXEC ADM.sp_executesql
        						    @StringToExecute
        						    ,N'@IFISetting varchar(1) OUTPUT'
        						    ,@IFISetting = @IFISetting OUTPUT
@@ -8837,7 +8837,7 @@ IF @ProductVersionMajor >= 10 AND  NOT EXISTS ( SELECT  1
 						/* We couldn't get the instant_file_initialization_enabled column from sys.dm_server_services, fall back to read error log */
     					BEGIN
        						SET @IFIReadDMVFailed = 1;
-       						/* If this is Amazon RDS, we'll use the rdsadmin.dbo.rds_read_error_log */
+       						/* If this is Amazon RDS, we'll use the rdsadmin.ADM.rds_read_error_log */
        						IF LEFT(CAST(SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS VARCHAR(8000)), 8) = 'EC2AMAZ-'
        						AND LEFT(CAST(SERVERPROPERTY('MachineName') AS VARCHAR(8000)), 8) = 'EC2AMAZ-'
        						AND db_id('rdsadmin') IS NOT NULL
@@ -8846,9 +8846,9 @@ IF @ProductVersionMajor >= 10 AND  NOT EXISTS ( SELECT  1
        					    			 WHERE  name IN ('rds_startup_tasks', 'rds_help_revlogin', 'rds_hexadecimal', 'rds_failover_tracking', 'rds_database_tracking', 'rds_track_change')
        								   )
        						BEGIN
-           						/* Amazon RDS detected, read rdsadmin.dbo.rds_read_error_log */
+           						/* Amazon RDS detected, read rdsadmin.ADM.rds_read_error_log */
            						INSERT INTO #ErrorLog
-           						EXEC rdsadmin.dbo.rds_read_error_log 0, 1, N'Database Instant File Initialization: enabled';
+           						EXEC rdsadmin.ADM.rds_read_error_log 0, 1, N'Database Instant File Initialization: enabled';
        						END
        						ELSE
        						BEGIN
@@ -9866,7 +9866,7 @@ IF @ProductVersionMajor >= 10 AND  NOT EXISTS ( SELECT  1
 					SET @EmailSubject = 'sp_Blitz Results for ' + @@SERVERNAME;
 					SET @EmailBody = 'sp_Blitz ' + CAST(CONVERT(DATETIME, @VersionDate, 102) AS VARCHAR(100)) + '. http://FirstResponderKit.org';
 					IF @EmailProfile IS NULL
-						EXEC msdb.dbo.sp_send_dbmail
+						EXEC msdb.ADM.sp_send_dbmail
 							@recipients = @EmailRecipients,
 							@subject = @EmailSubject,
 							@body = @EmailBody,
@@ -9879,7 +9879,7 @@ IF @ProductVersionMajor >= 10 AND  NOT EXISTS ( SELECT  1
 							@query_result_separator = @query_result_separator,
 							@query = @StringToExecute;
 					ELSE
-						EXEC msdb.dbo.sp_send_dbmail
+						EXEC msdb.ADM.sp_send_dbmail
 							@profile_name = @EmailProfile,
 							@recipients = @EmailRecipients,
 							@subject = @EmailSubject,
@@ -10274,7 +10274,7 @@ GO
 
 /*
 --Sample execution call with the most common parameters:
-EXEC [dbo].[sp_Blitz] 
+EXEC [ADM].[sp_Blitz] 
     @CheckUserDatabaseObjects = 1 ,
     @CheckProcedureCache = 0 ,
     @OutputType = 'TABLE' ,
