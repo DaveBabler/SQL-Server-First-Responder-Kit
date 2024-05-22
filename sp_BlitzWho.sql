@@ -1,8 +1,8 @@
-IF OBJECT_ID('dbo.sp_BlitzWho') IS NULL
-	EXEC ('CREATE PROCEDURE dbo.sp_BlitzWho AS RETURN 0;')
+IF OBJECT_ID('ADM.sp_BlitzWho') IS NULL
+	EXEC ('CREATE PROCEDURE ADM.sp_BlitzWho AS RETURN 0;')
 GO
 
-ALTER PROCEDURE dbo.sp_BlitzWho 
+ALTER PROCEDURE ADM.sp_BlitzWho 
 	@Help TINYINT = 0 ,
 	@ShowSleepingSPIDs TINYINT = 0,
 	@ExpertMode BIT = 0,
@@ -727,7 +727,7 @@ BEGIN
 		SET @StringToExecute +=
 				   N'program_name = COALESCE((
 					SELECT REPLACE(program_name,Substring(program_name,30,34),''"''+j.name+''"'') 
-					FROM msdb.dbo.sysjobs j WHERE Substring(program_name,32,32) = CONVERT(char(32),CAST(j.job_id AS binary(16)),2)
+					FROM msdb.ADM.sysjobs j WHERE Substring(program_name,32,32) = CONVERT(char(32),CAST(j.job_id AS binary(16)),2)
 					),s.program_name)'
 		END
 		ELSE
@@ -970,7 +970,7 @@ IF @ProductVersionMajor >= 11
 		SET @StringToExecute +=
 				   N'program_name = COALESCE((
 					SELECT REPLACE(program_name,Substring(program_name,30,34),''"''+j.name+''"'') 
-					FROM msdb.dbo.sysjobs j WHERE Substring(program_name,32,32) = CONVERT(char(32),CAST(j.job_id AS binary(16)),2)
+					FROM msdb.ADM.sysjobs j WHERE Substring(program_name,32,32) = CONVERT(char(32),CAST(j.job_id AS binary(16)),2)
 					),s.program_name)'
 		END
 		ELSE
