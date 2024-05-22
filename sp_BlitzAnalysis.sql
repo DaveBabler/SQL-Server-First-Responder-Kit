@@ -1,18 +1,18 @@
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE [object_id] = OBJECT_ID(N'[dbo].[sp_BlitzAnalysis]') AND [type] in (N'P', N'PC'))
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE [object_id] = OBJECT_ID(N'[ADM].[sp_BlitzAnalysis]') AND [type] in (N'P', N'PC'))
 BEGIN
-EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[sp_BlitzAnalysis] AS' 
+EXEC ADM.sp_executesql @statement = N'CREATE PROCEDURE [ADM].[sp_BlitzAnalysis] AS' 
 END
 GO
 
-ALTER PROCEDURE [dbo].[sp_BlitzAnalysis] (
+ALTER PROCEDURE [ADM].[sp_BlitzAnalysis] (
 @Help TINYINT = 0,
 @StartDate DATETIMEOFFSET(7) = NULL,
 @EndDate DATETIMEOFFSET(7) = NULL,
 @OutputDatabaseName NVARCHAR(256) = 'DBAtools',
-@OutputSchemaName NVARCHAR(256) = N'dbo',
+@OutputSchemaName NVARCHAR(256) = N'ADM',
 @OutputTableNameBlitzFirst NVARCHAR(256) = N'BlitzFirst', 
 @OutputTableNameFileStats NVARCHAR(256) = N'BlitzFirst_FileStats',
 @OutputTableNamePerfmonStats NVARCHAR(256)  = N'BlitzFirst_PerfmonStats',
@@ -50,7 +50,7 @@ BEGIN
 @StartDate = NULL,		/* Specify a datetime or NULL will get an hour ago */
 @EndDate = NULL,		/* Specify a datetime or NULL will get an hour of data since @StartDate */
 @OutputDatabaseName = N''DBA'',		/* Specify the database name where where we can find your logged blitz data */
-@OutputSchemaName = N''dbo'',		/* Specify the schema */
+@OutputSchemaName = N''ADM'',		/* Specify the schema */
 @OutputTableNameBlitzFirst = N''BlitzFirst'',		/* Table name where you are storing sp_BlitzFirst output, Set to NULL to ignore */ 
 @OutputTableNameFileStats = N''BlitzFirst_FileStats'',		/* Table name where you are storing sp_BlitzFirst filestats output, Set to NULL to ignore */ 
 @OutputTableNamePerfmonStats  = N''BlitzFirst_PerfmonStats'',		/* Table name where you are storing sp_BlitzFirst Perfmon output, Set to NULL to ignore */ 
@@ -100,7 +100,7 @@ SET @FullOutputTableNameWaitStats = QUOTENAME(@OutputDatabaseName)+N'.'+QUOTENAM
 SET @FullOutputTableNameBlitzCache = QUOTENAME(@OutputDatabaseName)+N'.'+QUOTENAME(@OutputSchemaName)+N'.'+QUOTENAME(@OutputTableNameBlitzCache);
 SET @FullOutputTableNameBlitzWho = QUOTENAME(@OutputDatabaseName)+N'.'+QUOTENAME(@OutputSchemaName)+N'.'+QUOTENAME(@OutputTableNameBlitzWho+N'_Deltas');
 
-IF OBJECT_ID('tempdb.dbo.#BlitzFirstCounts') IS NOT NULL 
+IF OBJECT_ID('tempdb.ADM.#BlitzFirstCounts') IS NOT NULL 
 BEGIN
 	DROP TABLE #BlitzFirstCounts;
 END
@@ -183,10 +183,10 @@ BEGIN
 	END
 END 
 
-/* Default to dbo schema if NULL is passed in */
+/* Default to ADM schema if NULL is passed in */
 IF (@OutputSchemaName IS NULL) 
 BEGIN 
-	SET @OutputSchemaName = 'dbo';
+	SET @OutputSchemaName = 'ADM';
 END
 
 /* Prompt the user for @BringThePain = 1 if they are searching a timeframe greater than 4 hours and they are using BlitzCacheSortorder = 'all' */
