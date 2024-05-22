@@ -1,11 +1,11 @@
-IF OBJECT_ID('dbo.sp_BlitzLock') IS NULL
+IF OBJECT_ID('ADM.sp_BlitzLock') IS NULL
 BEGIN
-    EXEC ('CREATE PROCEDURE dbo.sp_BlitzLock AS RETURN 0;');
+    EXEC ('CREATE PROCEDURE ADM.sp_BlitzLock AS RETURN 0;');
 END;
 GO
 
 ALTER PROCEDURE
-    dbo.sp_BlitzLock
+    ADM.sp_BlitzLock
 (
     @DatabaseName sysname = NULL,
     @StartDate datetime = NULL,
@@ -24,7 +24,7 @@ ALTER PROCEDURE
     @VersionDate datetime = NULL OUTPUT,
     @VersionCheckMode bit = 0,
     @OutputDatabaseName sysname = NULL,
-    @OutputSchemaName sysname = N'dbo',      /*ditto as below*/
+    @OutputSchemaName sysname = N'ADM',      /*ditto as below*/
     @OutputTableName sysname = N'BlitzLock', /*put a standard here no need to check later in the script*/
     @ExportToExcel bit = 0
 )
@@ -1711,8 +1711,8 @@ BEGIN
     SET
         aj.job_name = j.name,
         aj.step_name = s.step_name
-    FROM msdb.dbo.sysjobs AS j
-    JOIN msdb.dbo.sysjobsteps AS s
+    FROM msdb.ADM.sysjobs AS j
+    JOIN msdb.ADM.sysjobsteps AS s
       ON j.job_id = s.job_id
     JOIN #agent_job AS aj
       ON  aj.job_id_guid = j.job_id

@@ -8,11 +8,11 @@ SET STATISTICS IO OFF;
 SET STATISTICS TIME OFF;
 GO
 
-IF OBJECT_ID('dbo.sp_BlitzIndex') IS NULL
-  EXEC ('CREATE PROCEDURE dbo.sp_BlitzIndex AS RETURN 0;');
+IF OBJECT_ID('ADM.sp_BlitzIndex') IS NULL
+  EXEC ('CREATE PROCEDURE ADM.sp_BlitzIndex AS RETURN 0;');
 GO
 
-ALTER PROCEDURE dbo.sp_BlitzIndex
+ALTER PROCEDURE ADM.sp_BlitzIndex
     @DatabaseName NVARCHAR(128) = NULL, /*Defaults to current DB if not specified*/
     @SchemaName NVARCHAR(128) = NULL, /*Requires table_name as well.*/
     @TableName NVARCHAR(128) = NULL,  /*Requires schema_name as well.*/
@@ -392,9 +392,9 @@ IF OBJECT_ID('tempdb..#dm_db_index_operational_stats') IS NOT NULL
 				END /* First "end" is about is_spatial */,
 				[more_info] AS 
 				CASE WHEN is_in_memory_oltp = 1 
-					THEN N'EXEC dbo.sp_BlitzInMemoryOLTP @dbName=' + QUOTENAME([database_name],N'''') + 
+					THEN N'EXEC ADM.sp_BlitzInMemoryOLTP @dbName=' + QUOTENAME([database_name],N'''') + 
 					N', @tableName=' + QUOTENAME([object_name],N'''') + N';'
-				ELSE N'EXEC dbo.sp_BlitzIndex @DatabaseName=' + QUOTENAME([database_name],N'''') + 
+				ELSE N'EXEC ADM.sp_BlitzIndex @DatabaseName=' + QUOTENAME([database_name],N'''') + 
 					N', @SchemaName=' + QUOTENAME([schema_name],N'''') + N', @TableName=' + QUOTENAME([object_name],N'''') + N';'
 				END
 		);
@@ -655,7 +655,7 @@ IF OBJECT_ID('tempdb..#dm_db_index_operational_stats') IS NOT NULL
                     + N')'
                     + N';'
                     ,
-                [more_info] AS N'EXEC dbo.sp_BlitzIndex @DatabaseName=' + QUOTENAME([database_name],'''') + 
+                [more_info] AS N'EXEC ADM.sp_BlitzIndex @DatabaseName=' + QUOTENAME([database_name],'''') + 
                     N', @SchemaName=' + QUOTENAME([schema_name],'''') + N', @TableName=' + QUOTENAME([table_name],'''') + N';',
 				[sample_query_plan] XML NULL
             );
@@ -1118,8 +1118,8 @@ BEGIN TRY
 
         IF  (@TableName IS NOT NULL AND @SchemaName IS NULL)
         BEGIN
-            SET @SchemaName=N'dbo';
-            SET @msg='@SchemaName wasn''t specified-- assuming schema=dbo.';
+            SET @SchemaName=N'ADM';
+            SET @msg='@SchemaName wasn''t specified-- assuming schema=ADM.';
             RAISERROR(@msg,1,1) WITH NOWAIT;
         END;
 
@@ -3364,13 +3364,13 @@ BEGIN
 			BEGIN
 				IF (SUBSTRING(@OutputTableName, 2, 2) = '##')
 					BEGIN
-						SET @StringToExecute = N' IF (OBJECT_ID(''[tempdb].[dbo].@@@OutputTableName@@@'') IS NOT NULL) DROP TABLE @@@OutputTableName@@@';
+						SET @StringToExecute = N' IF (OBJECT_ID(''[tempdb].[ADM].@@@OutputTableName@@@'') IS NOT NULL) DROP TABLE @@@OutputTableName@@@';
 						SET @StringToExecute = REPLACE(@StringToExecute, '@@@OutputTableName@@@', @OutputTableName); 
 						EXEC(@StringToExecute);
 						
 						SET @OutputServerName = QUOTENAME(CAST(SERVERPROPERTY('ServerName') AS NVARCHAR(128)));
 						SET @OutputDatabaseName = '[tempdb]';
-						SET @OutputSchemaName = '[dbo]';
+						SET @OutputSchemaName = '[ADM]';
 						SET @ValidOutputLocation = 1;
 					END;
 				ELSE IF (SUBSTRING(@OutputTableName, 2, 1) = '#')
@@ -3429,7 +3429,7 @@ BEGIN
 						SET @TableExists = 1
 						IF NOT EXISTS(SELECT * FROM @@@OutputServerName@@@.@@@OutputDatabaseName@@@.INFORMATION_SCHEMA.COLUMNS WHERE QUOTENAME(TABLE_SCHEMA) = ''@@@OutputSchemaName@@@''
 										AND QUOTENAME(TABLE_NAME) = ''@@@OutputTableName@@@'' AND QUOTENAME(COLUMN_NAME) = ''[total_forwarded_fetch_count]'')
-							EXEC @@@OutputServerName@@@.@@@OutputDatabaseName@@@.dbo.sp_executesql N''ALTER TABLE @@@OutputSchemaName@@@.@@@OutputTableName@@@ ADD [total_forwarded_fetch_count] BIGINT''
+							EXEC @@@OutputServerName@@@.@@@OutputDatabaseName@@@.ADM.sp_executesql N''ALTER TABLE @@@OutputSchemaName@@@.@@@OutputTableName@@@ ADD [total_forwarded_fetch_count] BIGINT''
 					END';
 	
 				SET @StringToExecute = REPLACE(@StringToExecute, '@@@OutputServerName@@@', @OutputServerName);
