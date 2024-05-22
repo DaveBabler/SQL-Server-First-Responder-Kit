@@ -23,15 +23,15 @@ BEGIN
 	RETURN;
 END;
 
-IF OBJECT_ID('dbo.sp_BlitzCache') IS NULL
-  EXEC ('CREATE PROCEDURE dbo.sp_BlitzCache AS RETURN 0;');
+IF OBJECT_ID('ADM.sp_BlitzCache') IS NULL
+  EXEC ('CREATE PROCEDURE ADM.sp_BlitzCache AS RETURN 0;');
 GO
 
-IF OBJECT_ID('dbo.sp_BlitzCache') IS NOT NULL AND OBJECT_ID('tempdb.dbo.##BlitzCacheProcs', 'U') IS NOT NULL
+IF OBJECT_ID('ADM.sp_BlitzCache') IS NOT NULL AND OBJECT_ID('tempdb.ADM.##BlitzCacheProcs', 'U') IS NOT NULL
     EXEC ('DROP TABLE ##BlitzCacheProcs;');
 GO
 
-IF OBJECT_ID('dbo.sp_BlitzCache') IS NOT NULL AND OBJECT_ID('tempdb.dbo.##BlitzCacheResults', 'U') IS NOT NULL
+IF OBJECT_ID('ADM.sp_BlitzCache') IS NOT NULL AND OBJECT_ID('tempdb.ADM.##BlitzCacheResults', 'U') IS NOT NULL
     EXEC ('DROP TABLE ##BlitzCacheResults;');
 GO
 
@@ -238,7 +238,7 @@ CREATE TABLE ##BlitzCacheProcs (
     );
 GO 
 
-ALTER PROCEDURE dbo.sp_BlitzCache
+ALTER PROCEDURE ADM.sp_BlitzCache
     @Help BIT = 0,
     @Top INT = NULL,
     @SortOrder VARCHAR(50) = 'CPU',
@@ -2446,7 +2446,7 @@ IF @Debug = 1
 RAISERROR(N'Creating temp tables for results and warnings.', 0, 1) WITH NOWAIT;
 
 
-IF OBJECT_ID('tempdb.dbo.##BlitzCacheResults') IS NULL
+IF OBJECT_ID('tempdb.ADM.##BlitzCacheResults') IS NULL
 BEGIN
     CREATE TABLE ##BlitzCacheResults (
         SPID INT,
@@ -2468,7 +2468,7 @@ BEGIN
 END
 
 
-IF OBJECT_ID('tempdb.dbo.##BlitzCacheProcs') IS NULL
+IF OBJECT_ID('tempdb.ADM.##BlitzCacheProcs') IS NULL
 BEGIN
     CREATE TABLE ##BlitzCacheProcs (
         SPID INT ,
